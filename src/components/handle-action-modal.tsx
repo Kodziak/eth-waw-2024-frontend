@@ -4,7 +4,7 @@ import {
   ISuccessResult,
   VerificationLevel,
 } from "@worldcoin/idkit";
-import { verify } from "@/actions/verify";
+import { verify } from "@/app/actions/verify";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useAccount, useClient, useReadContract, useSwitchChain } from "wagmi";
@@ -15,7 +15,6 @@ import { ethers } from "ethers";
 import { useEthersSigner } from "@/utils/providers";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { arbitrum } from "viem/chains";
 
 export const HandleActionModal = ({
   requestId,
@@ -48,6 +47,38 @@ export const HandleActionModal = ({
   const client = useClient();
   const signer = useEthersSigner({ chainId: client?.chain.id });
 
+  const getContractAddress = () => {
+    switch (selectedNetwork) {
+      case "Zircuit Testnet":
+        return contracts?.zircuit;
+      case "Celo Alfajores":
+        return contracts?.celo;
+      case "Aleph Zero EVM Testnet":
+        return contracts?.azero;
+      case "Mantle":
+        return contracts?.mantle;
+      case "Sei Devnet":
+        return contracts?.sei;
+    }
+
+    return "";
+  };
+
+  const contractAddress = getContractAddress();
+
+  const { data: alreadyBet } = useReadContract({
+    address: contractAddress as `0x${string}`,
+    abi: predictionsMarketAbi,
+    functionName: "bets",
+    args: [address],
+  });
+
+  useEffect(() => {
+    if (!!alreadyBet) {
+      setStep("confirm");
+    }
+  }, [alreadyBet]);
+
   useEffect(() => {
     (async () => {
       const selectedChain = chains.find(
@@ -75,25 +106,6 @@ export const HandleActionModal = ({
       throw new Error(`Verification failed: ${data.detail}`);
     }
   };
-
-  const getContractAddress = () => {
-    switch (selectedNetwork) {
-      case "Celo Alfajores":
-        return contracts.celo;
-      case "Aleph Zero EVM Testnet":
-        return contracts.azero;
-      case "Zircuit Testnet":
-        return contracts.zircuit;
-      case "Mantle":
-        return contracts.mantle;
-      case "Sei Devnet":
-        return contracts.sei;
-    }
-
-    return "";
-  };
-
-  const contractAddress = getContractAddress();
 
   const handleTransfer = async () => {
     const contract = new ethers.Contract(
@@ -145,15 +157,7 @@ export const HandleActionModal = ({
     const res = await contract
       .claim()
       .catch((e: any) => setClaimError(e.reason));
-    console.log({ res });
   };
-
-  const { data: alreadyBet } = useReadContract({
-    address: contractAddress as `0x${string}`,
-    abi: predictionsMarketAbi,
-    functionName: "bets",
-    args: [address],
-  });
 
   const { data: canClaim } = useReadContract({
     address: contractAddress as `0x${string}`,
@@ -162,9 +166,8 @@ export const HandleActionModal = ({
     args: [address],
   });
 
-  console.log({ predictionsMarketAbi });
-
   if (!isOpen) return null;
+  if (!contracts) return null;
 
   function getNetworkSymbol(
     selectedNetwork: string,
@@ -181,7 +184,7 @@ export const HandleActionModal = ({
   }
 
   return (
-    <div className="absolute top-0 left-0 w-screen h-screen bg-black flex  pt-[164px] z-[99999] px-4">
+    <div className="absolute top-0 left-0 w-screen h-screen bg-black flex  pt-[164px] z-10 px-4">
       <button
         onClick={() => setIsOpen(false)}
         className="absolute top-16 right-6 text-white hover:text-gray-300 transition-colors"
@@ -203,7 +206,7 @@ export const HandleActionModal = ({
         </svg>
       </button>
 
-      {step === "confirm" && (
+      {step === "verify" && (
         <div className="flex flex-col gap-6 items-center w-full">
           <Image
             src="https://worldcoin.org/icons/logo-small.svg"
@@ -217,13 +220,13 @@ export const HandleActionModal = ({
             Prove that you&apos;re a real person by verifying your identity.
           </p>
 
-          <div className="flex flex-col gap-2 w-full">
+          <div className="flex flex-col gap-2 w-full z-[9999999999]">
             <IDKitWidget
               app_id={process.env.NEXT_PUBLIC_WLD_APP_ID as `app_${string}`}
               action="bet"
               onSuccess={onSuccess}
               handleVerify={handleVerify}
-              verification_level={VerificationLevel.Device}
+              verification_level={VerificationLevel.Orb}
             >
               {({ open }) => (
                 <button
@@ -245,7 +248,7 @@ export const HandleActionModal = ({
         </div>
       )}
 
-      {step === "verify" && (
+      {step === "confirm" && (
         <div className="flex flex-col gap-6 items-center w-full">
           <h3 className=" text-white flex gap-2 items-center justify-center">
             <Image
@@ -268,11 +271,11 @@ export const HandleActionModal = ({
                 onChange={(e) => setSelectedNetwork(e.target.value)}
                 className="bg-black border border-gray-800 rounded-[6px] p-2 w-full text-white"
               >
+                <option value="Zircuit Testnet">Zircuit</option>
                 <option value="Alfajores">Celo Alfajores</option>
                 <option value="Aleph Zero EVM Testnet">
                   Aleph Zero EVM Testnet
                 </option>
-                <option value="Zircuit Testnet">Zircuit</option>
                 <option value="Mantle">Mantle</option>
                 <option value="Sei Devnet">Sei</option>
               </select>

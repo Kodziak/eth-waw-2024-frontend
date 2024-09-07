@@ -64,7 +64,16 @@ export default function Page({ params }: { params: { id: string } }) {
     setBetTotals(betTotals);
   }, [activeBets, assetPrices]);
 
-  const [contracts, setContracts] = useState(data?.contracts ?? {});
+  const [contracts, setContracts] = useState<
+    | {
+        celo: string;
+        azero: string;
+        zircuit: string;
+        mantle: string;
+        sei: string;
+      }
+    | {}
+  >({});
 
   useEffect(() => {
     if (data?.contracts) {
@@ -106,70 +115,81 @@ export default function Page({ params }: { params: { id: string } }) {
             </div>
           )}
 
-          <div className="flex justify-between gap-4">
-            <div className="flex flex-col gap-2 flex-1">
+          <div className="flex flex-col gap-2">
+            <div className="flex  justify-between gap-2 flex-1">
               <h2 className="text-xl font-medium">{data?.title}</h2>
-              <p className="text-sm text-gray-400">{data?.description}</p>
+
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    `${window.location.origin}/${params.id}`,
+                  );
+
+                  toast.success("Link copied to clipboard", {
+                    style: {
+                      background: "white",
+                      color: "black",
+                      border: "1px solid gray",
+                      borderRadius: "6px",
+                    },
+                  });
+                }}
+                className="p-2 rounded bg-blue-500/20 text-blue-300 text-sm font-medium my-auto"
+              >
+                Share
+              </button>
             </div>
 
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(
-                  `${window.location.origin}/${params.id}`,
-                );
-
-                toast.success("Link copied to clipboard", {
-                  style: {
-                    background: "white",
-                    color: "black",
-                    border: "1px solid gray",
-                    borderRadius: "6px",
-                  },
-                });
-              }}
-              className="p-2 rounded bg-blue-500/20 text-blue-300 text-sm font-medium my-auto"
-            >
-              Share
-            </button>
+            <p className="text-sm text-gray-400">{data?.description}</p>
           </div>
 
-          <div className="w-full flex gap-2">
-            <button
-              className="flex-1 py-2 rounded-md text-sm font-medium text-green-400 bg-green-500/50 disabled:bg-gray-600 disabled:text-gray-400"
-              onClick={(e) => {
-                e.preventDefault();
-                handleAction("yes");
-              }}
-              // disabled={
-              //   !!activeBets?.find((bet) => bet.walletAddress === address)
-              // }
-            >
-              Yes
-            </button>
-            <button
-              className="flex-1 py-2 rounded-md text-red-400 bg-red-500/50 text-sm font-medium disabled:bg-gray-600 disabled:text-gray-400"
-              onClick={(e) => {
-                e.preventDefault();
-                handleAction("no");
-              }}
-              // disabled={
-              //   !!activeBets?.find((bet) => bet.walletAddress === address)
-              // }
-            >
-              No
-            </button>
-          </div>
+          {Object.keys(contracts).length > 0 && (
+            <div className="w-full flex gap-2">
+              <button
+                className="flex-1 py-2 rounded-md text-sm font-medium text-green-400 bg-green-500/50 disabled:bg-gray-600 disabled:text-gray-400"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAction("yes");
+                }}
+                // disabled={
+                //   !!activeBets?.find((bet) => bet.walletAddress === address)
+                // }
+              >
+                Yes
+              </button>
+              <button
+                className="flex-1 py-2 rounded-md text-red-400 bg-red-500/50 text-sm font-medium disabled:bg-gray-600 disabled:text-gray-400"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAction("no");
+                }}
+                // disabled={
+                //   !!activeBets?.find((bet) => bet.walletAddress === address)
+                // }
+              >
+                No
+              </button>
+            </div>
+          )}
+
+          {!isLoading && Object.keys(contracts).length === 0 && (
+            <span className="text-gray-500 text-sm">
+              Bets are in creation...
+            </span>
+          )}
 
           <div className="flex justify-between w-full">
             {/* <span className=" text-gray-500 text-sm">Total Bets: ~{totalBets}</span> */}
-            <span className=" text-gray-500 text-sm">
-              Resolve on:{" "}
-              {new Date(data?.dueDate!).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </span>
+            {!isLoading && (
+              <span className=" text-gray-500 text-sm">
+                Resolve on:{" "}
+                {new Date(data?.dueDate!).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </span>
+            )}
 
             {betTotals && (
               <div className="flex flex-col gap-1 text-right">
@@ -189,15 +209,15 @@ export default function Page({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        <div className="flex gap-2 flex-col">
-          <h2 className="text-xl font-medium">Bets History</h2>
+        {activeBets && activeBets.length > 0 && (
+          <div className="flex gap-2 flex-col">
+            <h2 className="text-xl font-medium">Bets History</h2>
 
-          {activeBets &&
-            activeBets.length > 0 &&
-            activeBets?.map((bet, index) => (
+            {activeBets?.map((bet, index) => (
               <BetHistoryCard {...bet} key={index} title={data?.title!} />
             ))}
-        </div>
+          </div>
+        )}
       </div>
 
       <HandleActionModal
@@ -205,7 +225,7 @@ export default function Page({ params }: { params: { id: string } }) {
         action={action}
         isOpen={showModal}
         setIsOpen={setShowModal}
-        contracts={contracts! as any}
+        contracts={contracts!}
       />
     </main>
   );
