@@ -1,0 +1,18 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+    "react/no-children-prop": "warn",
+    "react-hooks/exhaustive-deps": "off",
+    "react/jsx-no-target-blank": "off",
+    "no-extra-boolean-cast": "off",
+    "prefer-const": "warn",
+    "no-restricted-imports": ["warn", { "patterns": ["process"] }],
+    "semi": ["error", "always"],
+    "indent": ["error", 2],
+    "react/jsx-indent": ["error", 2]
+  }
+}
