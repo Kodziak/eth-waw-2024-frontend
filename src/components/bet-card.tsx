@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { HandleActionModal } from "./handle-action-modal";
 import Link from "next/link";
 import { BetResponse } from "@/types/bet";
 import Image from "next/image";
+import { useQuery } from "@tanstack/react-query";
+import { getAssetPrices, getActiveBetsById } from "@/utils/api";
 
 export const BetCard = ({
   requestId,
@@ -19,6 +21,53 @@ export const BetCard = ({
     setAction(action);
     setShowModal(true);
   };
+
+  const { data: assetPrices } = useQuery({
+    queryKey: ["active-bets"],
+    queryFn: () => getAssetPrices(),
+  });
+
+  const { data: activeBets } = useQuery({
+    queryKey: ["active-bets"],
+    queryFn: () => getActiveBetsById(requestId),
+  });
+
+  const [betTotals, setBetTotals] = useState<{
+    assetTotals: { [key: string]: number };
+    totalUSD: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const calculateTotalBets = () => {
+      if (!activeBets || !assetPrices || activeBets.length === 0) return null;
+
+      const totals: { [key: string]: number } = {};
+      let totalUSD = 0;
+
+      if (activeBets.length > 0) {
+        activeBets.forEach((bet) => {
+          const asset = bet.tokenName;
+          const amount = bet.tokens;
+
+          if (!totals[asset]) {
+            totals[asset] = 0;
+          }
+          totals[asset] += amount;
+
+          const usdPrice = assetPrices[asset]?.usd || 0;
+          totalUSD += amount * usdPrice;
+        });
+      }
+
+      return {
+        assetTotals: totals,
+        totalUSD: totalUSD.toFixed(2),
+      };
+    };
+
+    const betTotals = calculateTotalBets();
+    setBetTotals(betTotals);
+  }, [activeBets, assetPrices]);
 
   return (
     <div className="w-full p-4 rounded-md bg-gradient-to-tr from-blue-900/20 to-blue-900/5">
@@ -69,6 +118,22 @@ export const BetCard = ({
               day: "numeric",
             })}
           </span>
+
+          {betTotals && (
+            <div className="flex flex-col gap-1 text-right">
+              <span className=" text-gray-500 text-sm">
+                Total Bets: ~{betTotals?.totalUSD} USD
+              </span>
+
+              {Object.entries(betTotals?.assetTotals || {}).map(
+                ([asset, amount]) => (
+                  <span key={asset} className=" text-gray-500 text-sm">
+                    {asset}: {amount}
+                  </span>
+                ),
+              )}
+            </div>
+          )}
         </div>
       </Link>
 

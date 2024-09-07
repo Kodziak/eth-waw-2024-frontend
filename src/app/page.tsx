@@ -4,21 +4,10 @@ import { BetHistoryCard } from "@/components/bet-history-card";
 import { Loader } from "@/components/loader";
 import { Navbar } from "@/components/navbar";
 import { ActiveBetResponse, BetResponse } from "@/types/bet";
+import { getActiveBets, getBets } from "@/utils/api";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-
-const getBets = async (): Promise<BetResponse[]> => {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`);
-
-  return response.json();
-};
-
-const getActiveBets = async (): Promise<ActiveBetResponse[]> => {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/bets`);
-
-  return response.json();
-};
 
 export default function Home() {
   const { data, isLoading } = useQuery({

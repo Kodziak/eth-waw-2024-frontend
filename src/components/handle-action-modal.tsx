@@ -7,7 +7,7 @@ import {
 import { verify } from "@/actions/verify";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useAccount, useClient, useSwitchChain } from "wagmi";
+import { useAccount, useClient, useReadContract, useSwitchChain } from "wagmi";
 import { parseEther } from "viem";
 import predictionsMarketAbi from "@/contracts/predictions-market.json";
 import { WrapperBuilder } from "@redstone-finance/evm-connector";
@@ -15,6 +15,7 @@ import { ethers } from "ethers";
 import { useEthersSigner } from "@/utils/providers";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { arbitrum } from "viem/chains";
 
 export const HandleActionModal = ({
   requestId,
@@ -92,9 +93,9 @@ export const HandleActionModal = ({
     return "";
   };
 
-  const handleTransfer = async () => {
-    const contractAddress = getContractAddress();
+  const contractAddress = getContractAddress();
 
+  const handleTransfer = async () => {
     const contract = new ethers.Contract(
       contractAddress,
       predictionsMarketAbi,
@@ -129,6 +130,39 @@ export const HandleActionModal = ({
       },
     });
   };
+
+  const [claimError, setClaimError] = useState<string | null>(null);
+
+  const handleClaim = async () => {
+    const contractAddress = getContractAddress();
+
+    const contract = new ethers.Contract(
+      contractAddress,
+      predictionsMarketAbi,
+      signer,
+    );
+
+    const res = await contract
+      .claim()
+      .catch((e: any) => setClaimError(e.reason));
+    console.log({ res });
+  };
+
+  const { data: alreadyBet } = useReadContract({
+    address: contractAddress as `0x${string}`,
+    abi: predictionsMarketAbi,
+    functionName: "bets",
+    args: [address],
+  });
+
+  const { data: canClaim } = useReadContract({
+    address: contractAddress as `0x${string}`,
+    abi: predictionsMarketAbi,
+    functionName: "claims",
+    args: [address],
+  });
+
+  console.log({ predictionsMarketAbi });
 
   if (!isOpen) return null;
 
@@ -263,15 +297,40 @@ export const HandleActionModal = ({
             </div>
           </div>
 
-          <button
-            className={`text-white rounded-[6px] p-2 w-full disabled:bg-gray-500 ${
-              action === "yes" ? "bg-green-500/50" : "bg-red-500/50"
-            }`}
-            onClick={handleTransfer}
-            disabled={isPending}
-          >
-            Execute
-          </button>
+          <div className="flex flex-col gap-2 w-full">
+            {!canClaim && (
+              <button
+                className={`text-white rounded-[6px] p-2 w-full disabled:bg-gray-500 ${
+                  action === "yes" ? "bg-green-500/50" : "bg-red-500/50"
+                }`}
+                onClick={handleTransfer}
+                disabled={isPending || !!alreadyBet}
+              >
+                Execute
+              </button>
+            )}
+
+            {!!alreadyBet && !canClaim && (
+              <span className="text-gray-400 text-sm mx-auto">
+                Already voted
+              </span>
+            )}
+
+            {!!canClaim && (
+              <>
+                <button
+                  className="p-2 w-full text-gray-400 bg-gray-900"
+                  onClick={handleClaim}
+                >
+                  Claim
+                </button>
+
+                {claimError && (
+                  <p className="text-red-500 text-xs mx-auto">{claimError}</p>
+                )}
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>

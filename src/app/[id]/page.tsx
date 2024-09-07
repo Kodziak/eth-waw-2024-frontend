@@ -4,28 +4,12 @@ import { BetHistoryCard } from "@/components/bet-history-card";
 import { HandleActionModal } from "@/components/handle-action-modal";
 import { Loader } from "@/components/loader";
 import { Navbar } from "@/components/navbar";
-import { ActiveBetResponse, BetResponse } from "@/types/bet";
+import { getBet, getActiveBetsById, getAssetPrices } from "@/utils/api";
 import { useQuery } from "@tanstack/react-query";
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-
-const getBet = async (id: string): Promise<BetResponse> => {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/events/${id}`,
-  );
-
-  return response.json();
-};
-
-const getActiveBets = async (id: string): Promise<ActiveBetResponse[]> => {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/events/${id}/bets`,
-  );
-
-  return response.json();
-};
 
 export default function Page({ params }: { params: { id: string } }) {
   const { data, isLoading } = useQuery({
@@ -35,10 +19,52 @@ export default function Page({ params }: { params: { id: string } }) {
 
   const { data: activeBets, isLoading: isLoadingActiveBets } = useQuery({
     queryKey: ["active-bets"],
-    queryFn: () => getActiveBets(params.id),
+    queryFn: () => getActiveBetsById(params.id),
   });
 
-  const [contracts, setContracts] = useState(data?.contracts);
+  const { data: assetPrices } = useQuery({
+    queryKey: ["active-bets"],
+    queryFn: () => getAssetPrices(),
+  });
+
+  const [betTotals, setBetTotals] = useState<{
+    assetTotals: { [key: string]: number };
+    totalUSD: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const calculateTotalBets = () => {
+      if (!activeBets || !assetPrices || activeBets.length === 0) return null;
+
+      const totals: { [key: string]: number } = {};
+      let totalUSD = 0;
+
+      if (activeBets.length > 0) {
+        activeBets.forEach((bet) => {
+          const asset = bet.tokenName;
+          const amount = bet.tokens;
+
+          if (!totals[asset]) {
+            totals[asset] = 0;
+          }
+          totals[asset] += amount;
+
+          const usdPrice = assetPrices[asset]?.usd || 0;
+          totalUSD += amount * usdPrice;
+        });
+      }
+
+      return {
+        assetTotals: totals,
+        totalUSD: totalUSD.toFixed(2),
+      };
+    };
+
+    const betTotals = calculateTotalBets();
+    setBetTotals(betTotals);
+  }, [activeBets, assetPrices]);
+
+  const [contracts, setContracts] = useState(data?.contracts ?? {});
 
   useEffect(() => {
     if (data?.contracts) {
@@ -67,8 +93,6 @@ export default function Page({ params }: { params: { id: string } }) {
     setAction(action);
     setShowModal(true);
   };
-
-  const { address } = useAccount();
 
   return (
     <main className="w-screen min-h-screen relative bg-mempad-50 flex flex-col items-center gap-2 pb-8 px-2">
@@ -116,9 +140,9 @@ export default function Page({ params }: { params: { id: string } }) {
                 e.preventDefault();
                 handleAction("yes");
               }}
-              disabled={
-                !!activeBets?.find((bet) => bet.walletAddress === address)
-              }
+              // disabled={
+              //   !!activeBets?.find((bet) => bet.walletAddress === address)
+              // }
             >
               Yes
             </button>
@@ -128,12 +152,40 @@ export default function Page({ params }: { params: { id: string } }) {
                 e.preventDefault();
                 handleAction("no");
               }}
-              disabled={
-                !!activeBets?.find((bet) => bet.walletAddress === address)
-              }
+              // disabled={
+              //   !!activeBets?.find((bet) => bet.walletAddress === address)
+              // }
             >
               No
             </button>
+          </div>
+
+          <div className="flex justify-between w-full">
+            {/* <span className=" text-gray-500 text-sm">Total Bets: ~{totalBets}</span> */}
+            <span className=" text-gray-500 text-sm">
+              Resolve on:{" "}
+              {new Date(data?.dueDate!).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </span>
+
+            {betTotals && (
+              <div className="flex flex-col gap-1 text-right">
+                <span className=" text-gray-500 text-sm">
+                  Total Bets: ~{betTotals?.totalUSD} USD
+                </span>
+
+                {Object.entries(betTotals?.assetTotals || {}).map(
+                  ([asset, amount]) => (
+                    <span key={asset} className=" text-gray-500 text-sm">
+                      {asset}: {amount}
+                    </span>
+                  ),
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -153,7 +205,7 @@ export default function Page({ params }: { params: { id: string } }) {
         action={action}
         isOpen={showModal}
         setIsOpen={setShowModal}
-        contracts={contracts!}
+        contracts={contracts! as any}
       />
     </main>
   );
