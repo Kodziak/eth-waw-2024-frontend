@@ -225,7 +225,7 @@ export default function Page({ params }: { params: { id: string } }) {
         action={action}
         isOpen={showModal}
         setIsOpen={setShowModal}
-        contracts={contracts!}
+        contracts={contracts! as any}
       />
     </main>
   );
