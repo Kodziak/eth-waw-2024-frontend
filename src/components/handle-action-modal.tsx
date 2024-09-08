@@ -159,6 +159,13 @@ export const HandleActionModal = ({
       .catch((e: any) => setClaimError(e.reason));
   };
 
+  const { data: claimAvailable } = useReadContract({
+    address: contractAddress as `0x${string}`,
+    abi: predictionsMarketAbi,
+    functionName: "outcome",
+    args: [],
+  });
+
   const { data: canClaim } = useReadContract({
     address: contractAddress as `0x${string}`,
     abi: predictionsMarketAbi,
@@ -182,6 +189,8 @@ export const HandleActionModal = ({
 
     return networkSymbols[selectedNetwork] || "ETH";
   }
+
+  console.log({ canClaim, claimAvailable });
 
   return (
     <div className="absolute top-0 left-0 w-screen h-screen bg-black flex  pt-[164px] z-10 px-4">
@@ -301,7 +310,7 @@ export const HandleActionModal = ({
           </div>
 
           <div className="flex flex-col gap-2 w-full">
-            {!canClaim && (
+            {!claimAvailable && (
               <button
                 className={`text-white rounded-[6px] p-2 w-full disabled:bg-gray-500 ${
                   action === "yes" ? "bg-green-500/50" : "bg-red-500/50"
@@ -313,13 +322,13 @@ export const HandleActionModal = ({
               </button>
             )}
 
-            {!!alreadyBet && !canClaim && (
+            {!!alreadyBet && !claimAvailable && (
               <span className="text-gray-400 text-sm mx-auto">
                 Already voted
               </span>
             )}
 
-            {!!canClaim && (
+            {!!claimAvailable && (
               <>
                 <button
                   className="p-2 w-full text-gray-400 bg-gray-900"
