@@ -157,6 +157,17 @@ export const HandleActionModal = ({
     const res = await contract
       .claim()
       .catch((e: any) => setClaimError(e.reason));
+
+    toast.success("Claimed successfully", {
+      style: {
+        background: "white",
+        color: "black",
+        border: "1px solid gray",
+        borderRadius: "6px",
+      },
+    });
+
+    setIsOpen(false);
   };
 
   const { data: claimAvailable } = useReadContract({
