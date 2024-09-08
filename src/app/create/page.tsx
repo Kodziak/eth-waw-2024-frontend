@@ -3,9 +3,9 @@
 import { CreateRequest } from "@/components/create-request";
 import { Navbar } from "@/components/navbar";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Bet } from "@/types/bet";
-import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 
 export default function Home() {
   const [bet, setBet] = useState<Bet>({

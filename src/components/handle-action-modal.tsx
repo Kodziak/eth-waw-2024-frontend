@@ -201,8 +201,6 @@ export const HandleActionModal = ({
     return networkSymbols[selectedNetwork] || "ETH";
   }
 
-  console.log({ canClaim, claimAvailable });
-
   return (
     <div className="absolute top-0 left-0 w-screen h-screen bg-black flex  pt-[164px] z-10 px-4">
       <button

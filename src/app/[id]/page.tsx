@@ -9,7 +9,6 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 
 export default function Page({ params }: { params: { id: string } }) {
   const { data, isLoading } = useQuery({
@@ -151,9 +150,6 @@ export default function Page({ params }: { params: { id: string } }) {
                   e.preventDefault();
                   handleAction("yes");
                 }}
-                // disabled={
-                //   !!activeBets?.find((bet) => bet.walletAddress === address)
-                // }
               >
                 Yes
               </button>
@@ -163,9 +159,6 @@ export default function Page({ params }: { params: { id: string } }) {
                   e.preventDefault();
                   handleAction("no");
                 }}
-                // disabled={
-                //   !!activeBets?.find((bet) => bet.walletAddress === address)
-                // }
               >
                 No
               </button>
@@ -179,7 +172,6 @@ export default function Page({ params }: { params: { id: string } }) {
           )}
 
           <div className="flex justify-between w-full">
-            {/* <span className=" text-gray-500 text-sm">Total Bets: ~{totalBets}</span> */}
             {!isLoading && (
               <span className=" text-gray-500 text-sm">
                 Resolve on:{" "}

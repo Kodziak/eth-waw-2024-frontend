@@ -38,7 +38,7 @@ const a0evm = defineChain({
 const web3Metadata = {
   name: "AppKit",
   description: "AppKit Example",
-  url: "https://web3modal.com", // origin must match your domain & subdomain
+  url: "https://web3modal.com",
   icons: ["https://avatars.githubusercontent.com/u/37784886"],
 };
 

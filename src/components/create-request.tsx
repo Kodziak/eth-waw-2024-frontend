@@ -110,15 +110,11 @@ export const CreateRequest = ({
       requestCreateParameters,
     );
 
-    console.log({ inMemoryRequest });
-
     const paymentRequest = await payRequest(
       inMemoryRequest.inMemoryInfo?.requestData!,
       signer,
     );
-    console.log({ paymentRequest });
     const paymentRequestWait = await paymentRequest.wait(1);
-    console.log({ paymentRequestWait });
 
     const saveBetResponse = await axios.post(
       `${process.env.NEXT_PUBLIC_API_URL}/events`,
@@ -127,7 +123,6 @@ export const CreateRequest = ({
         ...bet,
       },
     );
-    console.log({ saveBetResponse });
 
     const persistingRequestNetwork = new RequestNetwork({
       nodeConnectionConfig: {

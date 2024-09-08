@@ -83,8 +83,6 @@ export default function Home() {
               <BetHistoryCard {...bet} key={index} title={bet.eventTitle} />
             ))}
         </div>
-
-        {/* <CreateRequest /> */}
       </div>
     </main>
   );

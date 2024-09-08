@@ -8,7 +8,6 @@ import { getAssetPrices, getActiveBetsById } from "@/utils/api";
 
 export const BetCard = ({
   requestId,
-  // image,
   title,
   description,
   dueDate,

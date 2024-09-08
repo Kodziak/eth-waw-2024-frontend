@@ -2,12 +2,10 @@ import { ActiveBetResponse } from "@/types/bet";
 import Image from "next/image";
 
 export const BetHistoryCard = ({
-  eventRequestId,
   walletAddress,
   prediction,
   tokens,
   tokenName,
-  id,
   title,
 }: ActiveBetResponse & { title: string }) => {
   return (

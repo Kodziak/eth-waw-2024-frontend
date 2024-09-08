@@ -31,8 +31,3 @@ body {
     text-wrap: balance;
   }
 }
-
-.stroke-text {
-  -webkit-text-stroke: 0.5px #00ff00; /* green stroke, 0.5px width */
-  text-stroke: 0.5px #00ff00;
-}
